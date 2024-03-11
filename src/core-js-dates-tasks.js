@@ -161,20 +161,22 @@ function isDateInPeriod(date, period) {
  * '1999-01-05T02:20:00.000Z' => '1/5/1999, 2:20:00 AM'
  * '2010-12-15T22:59:00.000Z' => '12/15/2010, 10:59:00 PM'
  */
-function formatDate(/* date */) {
-  // const parsedDate = new Date(date);
+function formatDate(date) {
+  const options = {
+    timeZone: 'UTC',
+    month: 'numeric',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    second: 'numeric',
+    hour12: true,
+  };
 
-  // const month = parsedDate.getMonth() + 1;
-  // const day = parsedDate.getDate();
-  // const year = parsedDate.getFullYear();
-  // const UTChour = parsedDate.getUTCHours();
-  // const minute = parsedDate.getMinutes();
-  // const second = parsedDate.getSeconds();
-
-  // const formattedDate = `${month}/${day}/${year}, ${UTChour % 12}:${minute < 10 ? '0' : ''}${minute}:${second < 10 ? '0' : ''}${second} ${UTChour < 12 ? 'AM' : 'PM'}`;
-
-  // return formattedDate;
-  throw new Error('Not implemented');
+  const formattedDate = new Intl.DateTimeFormat('en-US', options).format(
+    new Date(date)
+  );
+  return formattedDate;
 }
 
 /**
@@ -243,9 +245,6 @@ function getWeekNumberByDate(date) {
  * Date(2023, 1, 1) => Date(2023, 9, 13)
  */
 function getNextFridayThe13th(/* date */) {
-  // console.log(date);
-  // const hoursBeforeFriday = ((6 - date.getDay() + 7) % 7) * 24;
-  // return new Date(date.setHours(date.getHours() + hoursBeforeFriday));
   throw new Error('Not implemented');
 }
 
@@ -286,25 +285,36 @@ function getQuarter(date) {
  * { start: '01-01-2024', end: '15-01-2024' }, 1, 3 => ['01-01-2024', '05-01-2024', '09-01-2024', '13-01-2024']
  * { start: '01-01-2024', end: '10-01-2024' }, 1, 1 => ['01-01-2024', '03-01-2024', '05-01-2024', '07-01-2024', '09-01-2024']
  */
-function getWorkSchedule(/* period, countWorkDays, countOffDays */) {
-  // function formatDateFn(date) {
-  //   const day = String(date.getDate()).padStart(2, '0');
-  //   const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-  //   const year = date.getFullYear();
-  //   return `${day}-${month}-${year}`;
-  // }
-  // const startDate = new Date(period.start);
-  // const endDate = new Date(period.end);
-  // const schedule = [];
-  // const currentDate = startDate;
-  // while (currentDate <= endDate) {
-  //   if (schedule.length % (countWorkDays + countOffDays) < countWorkDays) {
-  //     schedule.push(formatDateFn(currentDate));
-  //   }
-  //   currentDate.setDate(currentDate.getDate() + 1);
-  // }
-  // return schedule;
-  throw new Error('Not implemented');
+function getWorkSchedule(period, countWorkDays, countOffDays) {
+  function parseDate(dateString) {
+    const [day, month, year] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  const startDate = parseDate(period.start);
+  const endDate = parseDate(period.end);
+  const schedule = [];
+  const currentDate = new Date(startDate);
+
+  function formatDateNow(date) {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  while (currentDate <= endDate) {
+    for (let i = 0; i < countWorkDays && currentDate <= endDate; i += 1) {
+      schedule.push(formatDateNow(currentDate));
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    for (let i = 0; i < countOffDays && currentDate <= endDate; i += 1) {
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+  }
+
+  return schedule;
 }
 
 /**
